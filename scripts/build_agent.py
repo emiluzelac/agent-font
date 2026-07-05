@@ -2,7 +2,9 @@
 """Build the Agent font family from vendored TASA Orbiter binaries."""
 import pathlib
 
-from rename_map import COPYRIGHT_NOTICE
+from fontTools.ttLib import TTFont
+
+from rename_map import COPYRIGHT_NOTICE, STATIC_WEIGHTS
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
 VENDOR_DIR = REPO_ROOT / "vendor" / "TASA-Orbiter-v1.001"
@@ -42,3 +44,19 @@ def set_name_all_platforms(name_table, name_id, value):
 
 def set_copyright(font, notice=COPYRIGHT_NOTICE):
     set_name_all_platforms(font["name"], 0, notice)
+
+
+def build_static_otfs():
+    out_dir = DIST_DIR / "otf"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    built = []
+    for optical, weights in STATIC_WEIGHTS.items():
+        for weight in weights:
+            src = VENDOR_DIR / "otf" / f"TASAOrbiter{optical}-{weight}.otf"
+            font = TTFont(src)
+            rename_strings(font)
+            set_copyright(font)
+            out_path = out_dir / f"Agent{optical}-{weight}.otf"
+            font.save(out_path)
+            built.append(out_path)
+    return built
