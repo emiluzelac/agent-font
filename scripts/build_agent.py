@@ -60,3 +60,22 @@ def build_static_otfs():
             font.save(out_path)
             built.append(out_path)
     return built
+
+
+def build_combined_vf():
+    webfonts_dir = DIST_DIR / "webfonts"
+    variable_dir = DIST_DIR / "variable"
+    webfonts_dir.mkdir(parents=True, exist_ok=True)
+    variable_dir.mkdir(parents=True, exist_ok=True)
+
+    font = TTFont(VENDOR_DIR / "vf" / "TASAOrbiterVF.woff2")
+    rename_strings(font)
+    set_copyright(font)
+    font.flavor = None
+    ttf_path = variable_dir / "AgentVF.ttf"
+    font.save(ttf_path)
+
+    webfont = TTFont(ttf_path)
+    webfont.flavor = "woff2"
+    webfont.save(webfonts_dir / "AgentVF.woff2")
+    return ttf_path
