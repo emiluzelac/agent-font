@@ -5,7 +5,7 @@ import pathlib
 from fontTools.ttLib import TTFont
 from fontTools.varLib.instancer import instantiateVariableFont
 
-from rename_map import COPYRIGHT_NOTICE, STATIC_WEIGHTS, SPLIT_VF_AXES
+from rename_map import COPYRIGHT_NOTICE, OFL_HEADER, STATIC_WEIGHTS, SPLIT_VF_AXES
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
 VENDOR_DIR = REPO_ROOT / "vendor" / "TASA-Orbiter-v1.001"
@@ -147,3 +147,17 @@ def build_split_vf(combined_ttf_path, optical):
     webfont.flavor = "woff2"
     webfont.save(webfonts_dir / f"Agent{optical}VF.woff2")
     return ttf_path
+
+
+def generate_ofl():
+    lines = (VENDOR_DIR / "OFL.txt").read_text(encoding="utf-8").splitlines(keepends=True)
+    marker_index = next(i for i, line in enumerate(lines) if line.strip().startswith("---"))
+    body = "".join(lines[marker_index:])
+
+    DIST_DIR.mkdir(parents=True, exist_ok=True)
+    ofl_path = DIST_DIR / "OFL.txt"
+    ofl_path.write_text(OFL_HEADER + body, encoding="utf-8")
+
+    license_path = REPO_ROOT / "LICENSE"
+    license_path.write_text(OFL_HEADER + body, encoding="utf-8")
+    return ofl_path
