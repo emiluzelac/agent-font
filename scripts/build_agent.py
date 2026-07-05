@@ -72,6 +72,7 @@ def build_combined_vf():
     font = TTFont(VENDOR_DIR / "vf" / "TASAOrbiterVF.woff2")
     rename_strings(font)
     set_copyright(font)
+    ensure_dedicated_instance_names(font)
     font.flavor = None
     ttf_path = variable_dir / "AgentVF.ttf"
     font.save(ttf_path)
@@ -80,6 +81,23 @@ def build_combined_vf():
     webfont.flavor = "woff2"
     webfont.save(webfonts_dir / "AgentVF.woff2")
     return ttf_path
+
+
+def ensure_dedicated_instance_names(font):
+    name = font["name"]
+    fvar = font["fvar"]
+    next_name_id = max(rec.nameID for rec in name.names) + 1
+    for inst in fvar.instances:
+        if inst.subfamilyNameID in (2, 17):
+            text = name.getDebugName(inst.subfamilyNameID)
+            set_name_all_platforms(name, next_name_id, text)
+            inst.subfamilyNameID = next_name_id
+            next_name_id += 1
+        if inst.postscriptNameID not in (None, 0xFFFF) and inst.postscriptNameID in (6,):
+            text = name.getDebugName(inst.postscriptNameID)
+            set_name_all_platforms(name, next_name_id, text)
+            inst.postscriptNameID = next_name_id
+            next_name_id += 1
 
 
 def prune_stat(font):
