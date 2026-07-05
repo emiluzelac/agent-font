@@ -12,7 +12,7 @@ DIST_DIR = REPO_ROOT / "dist" / "Agent"
 def rename_strings(font, skip_name0=True):
     name = font["name"]
     for rec in name.names:
-        if not skip_name0 and rec.nameID == 0:
+        if skip_name0 and rec.nameID == 0:
             continue
         text = rec.toUnicode()
         new_text = text.replace("TASA Orbiter", "Agent").replace("TASAOrbiter", "Agent")

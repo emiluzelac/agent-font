@@ -18,12 +18,13 @@ pytestmark = pytest.mark.skipif(
 
 
 def test_rename_strings_replaces_brand_in_name_table():
+    original_copyright = TTFont(VENDOR_OTF)["name"].getDebugName(0)
     font = TTFont(VENDOR_OTF)
     build_agent.rename_strings(font)
     name = font["name"]
     assert name.getDebugName(1) == "Agent Text"
     assert name.getDebugName(6) == "AgentText-Regular"
-    assert "TASA" not in name.getDebugName(0)  # nameID 0 untouched by rename_strings (skip_name0=True)
+    assert name.getDebugName(0) == original_copyright  # nameID 0 left untouched; set_copyright() handles it separately
 
 
 def test_rename_strings_replaces_cff_names():
