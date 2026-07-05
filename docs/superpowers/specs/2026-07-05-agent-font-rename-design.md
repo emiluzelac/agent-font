@@ -41,12 +41,21 @@ a fork of v1.001, not a tracker of upstream's future changes.
 - **In scope**: TASA Orbiter → Agent (Text/Deck/Display sub-families, all
   13 static weights, plus the variable font).
 - **Out of scope**: TASA Explorer (untouched).
-- **Deliverables**: same binary types the upstream release ships — 13 static
-  OTFs + 1 variable WOFF2 — **plus** one added artifact: a variable **TTF**
-  decompressed from the WOFF2, since a `.woff2` isn't directly installable as
-  a system font on macOS/Windows, and a variable TTF is useful for design
-  apps (Figma, Illustrator) and OS installation. Everything else mirrors
-  upstream 1:1.
+- **Deliverables**: 13 static OTFs (unchanged from upstream's own split), plus
+  **four variable fonts**, each in both WOFF2 (web) and TTF (desktop/design-app
+  install, since `.woff2` isn't directly installable as a system font on
+  macOS/Windows):
+  - Three split by optical size — **Agent Text VF**, **Agent Deck VF**,
+    **Agent Display VF** — each self-contained, `wght`-only, for anyone who
+    only needs one optical.
+  - One combined **Agent VF** — upstream's full `opsz` (8–60) + `wght`
+    (400–900) range in a single file, for anyone who wants continuous
+    scrubbing across all three in one asset.
+
+  This is a deliberate departure from upstream (which only shipped the
+  combined one): not everyone needs all three opticals, so the split
+  families are added *alongside* the combined one rather than replacing it.
+  See "Variable font split" below.
 
 ## Naming scheme
 
@@ -55,9 +64,9 @@ a fork of v1.001, not a tracker of upstream's future changes.
 | TASA Orbiter Text | Agent Text |
 | TASA Orbiter Deck | Agent Deck |
 | TASA Orbiter Display | Agent Display |
-| TASA Orbiter VF (typographic family) | Agent VF |
+| TASA Orbiter VF (single, combined) | Agent VF (combined, kept) + Agent Text VF / Agent Deck VF / Agent Display VF (split, added) |
 | `TASAOrbiterText-Bold` (PostScript) | `AgentText-Bold` |
-| `TASAOrbiterVF-TextRegular` (PostScript) | `AgentVF-TextRegular` |
+| `TASAOrbiterVF-TextRegular` (PostScript) | `AgentTextVF-Regular` / `AgentDeckVF-Bold` / `AgentDisplayVF-Black` |
 
 Weight/style names (Regular/Medium/SemiBold/Bold/Black) and the
 Text/Deck/Display optical-size split are unchanged — only the "TASA
@@ -66,7 +75,33 @@ appears (family name, full name, PostScript name, unique ID, typographic
 family/subfamily, CFF `FontName`/`FullName`).
 
 File names follow the same pattern:
-`AgentText-Regular.otf`, `AgentDeck-Bold.otf`, `AgentVF.woff2`, `AgentVF.ttf`, etc.
+`AgentText-Regular.otf`, `AgentDeck-Bold.otf`, `AgentTextVF.woff2`,
+`AgentDisplayVF.ttf`, etc.
+
+### Variable font split
+
+Upstream ships one `TASAOrbiterVF.woff2` spanning all three opticals via the
+`opsz` axis (8–60) plus `wght` (400–900). Agent keeps that combined file
+(renamed `Agent VF`, unchanged axes/instances) **and** adds three more,
+built from it via `fonttools varLib.instancer`, which pins `opsz` per
+optical and drops the axis entirely (each split font keeps only `wght`):
+
+| Font | `opsz` | `wght` range | Matches static instances |
+|---|---|---|---|
+| Agent VF (combined) | 8–60 (full axis, unchanged) | 400–900 | all 13 |
+| Agent Text VF | pinned 8 | 400–700 | Regular/Medium/SemiBold/Bold |
+| Agent Deck VF | pinned 32 | 400–700 | Regular/Medium/SemiBold/Bold |
+| Agent Display VF | pinned 60 | 400–900 | Regular/Medium/SemiBold/Bold/Black |
+
+The `wght` range for each split font is capped to what upstream actually
+validated and shipped as named static instances for that optical — e.g.
+Text/Deck don't get an 800–900 range just because the underlying design
+space technically interpolates there; that combination was never shipped or
+visually confirmed by the original designer. Named instances within each
+split font drop the now-redundant optical prefix (`"Text Regular"` →
+`"Regular"`, since it's implicit in the family name `Agent Text VF` itself).
+The combined `Agent VF` keeps its original instance names (`"Text
+Regular"`, `"Deck Bold"`, etc.) unchanged, since it still spans all three.
 
 ## What gets changed in each font (technical)
 
@@ -115,9 +150,11 @@ Font/
     build_agent.py                 # fontTools pipeline: vendor/ -> dist/
   dist/
     Agent/
-      otf/AgentText-Regular.otf, ...   (13 files)
-      webfonts/AgentVF.woff2
-      variable/AgentVF.ttf
+      otf/AgentText-Regular.otf, ...          (13 files)
+      webfonts/AgentVF.woff2, AgentTextVF.woff2,
+               AgentDeckVF.woff2, AgentDisplayVF.woff2
+      variable/AgentVF.ttf, AgentTextVF.ttf,
+               AgentDeckVF.ttf, AgentDisplayVF.ttf
       OFL.txt
   LICENSE                          # copy of dist/Agent/OFL.txt, for GitHub's license detection
   README.md
@@ -141,21 +178,28 @@ drop the new files into `vendor/` and re-run the script to regenerate `dist/`.
     [TASA Typeface Collection](https://github.com/localremotetw/TASA-Typeface-Collection)
     and the v1.001 release.
   - License: SIL Open Font License 1.1, linking `LICENSE`.
-  - Family/style list (Agent Text/Deck/Display × weights, Agent VF) and
-    where to find the built files in `dist/Agent/`.
-  - Basic install/usage instructions (desktop install of the OTFs or the
-    variable TTF; `@font-face` snippet for `AgentVF.woff2` on the web).
+  - Family/style list (Agent Text/Deck/Display statics × weights; Agent VF
+    combined + Agent Text/Deck/Display VF split) and where to find the built
+    files in `dist/Agent/`, with a note on which variable font to pick
+    (single optical vs. full-range combined).
+  - Basic install/usage instructions (desktop install of the OTFs or any
+    variable TTF; `@font-face` snippets for the WOFF2 variable fonts on the
+    web).
 
 ## Verification plan
 
 - `fontTools ttx`/Python dump of the `name` table on a sample from each
-  sub-family (Text/Deck/Display + the VF) confirming no "TASA" or "Orbiter"
-  string remains anywhere, and that copyright/designer/license fields match
-  the intended values above.
-- Install a couple of the generated OTFs plus the variable TTF locally and
-  confirm they appear as "Agent Text", "Agent Deck", "Agent Display" (and
-  "Agent VF") in Font Book/system font list, with the expected weight
-  instances.
+  sub-family (Text/Deck/Display + all four VFs) confirming no "TASA" or
+  "Orbiter" string remains anywhere, and that copyright/designer/license
+  fields match the intended values above.
+- For each split VF, confirm the `fvar` table has only a `wght` axis (no
+  `opsz`) and that its range matches the table above (400–700 for
+  Text/Deck, 400–900 for Display); confirm the combined `Agent VF` still
+  has both axes at their original ranges.
+- Install a couple of the generated OTFs plus all four variable TTFs
+  locally and confirm they appear as "Agent Text", "Agent Deck", "Agent
+  Display", "Agent VF", "Agent Text VF", "Agent Deck VF", and "Agent
+  Display VF" in Font Book/system font list, with the expected instances.
 - Render a sample string with each installed style as a quick visual sanity
   check that outlines/hinting are unaffected by the metadata edit.
 
@@ -166,3 +210,6 @@ drop the new files into `vendor/` and re-run the script to regenerate `dist/`.
 3. Vendor URL (nameID 11) stays `localremote.co`.
 4. Repo: public, `github.com/emiluzelac/agent-font`, with a README crediting
    Local Remote / Weizhong Zhang as the original designer.
+5. Variable fonts: ship **both** — the three opticals split out
+   (Agent Text/Deck/Display VF) **and** the original combined Agent VF —
+   four variable fonts total, each in WOFF2 + TTF.
