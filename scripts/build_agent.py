@@ -161,3 +161,15 @@ def generate_ofl():
     license_path = REPO_ROOT / "LICENSE"
     license_path.write_text(OFL_HEADER + body, encoding="utf-8")
     return ofl_path
+
+
+def main():
+    build_static_otfs()
+    combined_ttf = build_combined_vf()
+    for optical in SPLIT_VF_AXES:
+        build_split_vf(combined_ttf, optical)
+    generate_ofl()
+
+
+if __name__ == "__main__":
+    main()
