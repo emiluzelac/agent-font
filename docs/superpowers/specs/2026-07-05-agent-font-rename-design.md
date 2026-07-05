@@ -31,6 +31,11 @@ Remote** (localremote.co), vendor tag `Loca`.
 Because there's no design source, "building" Agent means editing metadata in
 the existing compiled binaries with a script — not recompiling outlines.
 
+v1.001 is pinned deliberately, not just "whatever's latest": the collection
+is no longer maintained, and this original design is preferred over TASA's
+2025 revision. `vendor/` holds exactly this release, permanently — Agent is
+a fork of v1.001, not a tracker of upstream's future changes.
+
 ## Scope
 
 - **In scope**: TASA Orbiter → Agent (Text/Deck/Display sub-families, all
@@ -75,18 +80,14 @@ For every static OTF and the variable font:
   top dict get the same substitution (this is what Font Book/macOS actually
   reads on some code paths, independent of the `name` table).
 - **NameID 0 (copyright)** — the original notice is **retained** (OFL
-  requirement), with a modification notice appended, e.g.:
+  requirement), with a modification notice appended:
   > Copyright © 2023 Local Remote (https://localremote.co/). Portions
   > Copyright © 2026 Emil Uzelac. Renamed "Agent"; based on TASA Orbiter,
   > used and modified under the SIL Open Font License, Version 1.1.
-
-  *(Placeholder — confirm "Emil Uzelac" is the right name/entity for the
-  modification copyright, or provide the one you want.)*
 - **NameID 9 (Designer), NameID 13/14 (license text/URL), `OS/2.achVendID`
-  (`Loca`)** — left unchanged; the underlying design and license don't
-  change, only the brand name does.
-- **NameID 11 (vendor URL)** — left pointing at `localremote.co` by default
-  (still an accurate attribution) unless you want it pointed elsewhere.
+  (`Loca`), NameID 11 (vendor URL, stays `localremote.co`)** — left
+  unchanged; the underlying design and license don't change, only the
+  brand name does.
 - **STAT table, `fvar` axes/instances, OS/2 weight class, `head.macStyle`,
   glyph outlines, hinting** — untouched. These don't reference the brand
   name and don't need to change for a rename.
@@ -118,11 +119,32 @@ Font/
       webfonts/AgentVF.woff2
       variable/AgentVF.ttf
       OFL.txt
+  LICENSE                          # copy of dist/Agent/OFL.txt, for GitHub's license detection
   README.md
 ```
 
 `build_agent.py` is re-runnable: if TASA ships a new Orbiter release later,
 drop the new files into `vendor/` and re-run the script to regenerate `dist/`.
+
+## Hosting & README
+
+- **Repo**: public, `https://github.com/emiluzelac/agent-font` (name checked
+  available). Chosen over the bare `agent` to avoid ambiguity with
+  agent/AI-agent projects, and easy to rename later since GitHub keeps a
+  redirect from the old name.
+- **README.md** covers:
+  - What Agent is and why it exists (a preserved/renamed fork of TASA
+    Orbiter v1.001, from a now-unmaintained collection whose original
+    2023 design is preferred here over TASA's later revision).
+  - **Designed by Local Remote, Weizhong Zhang** — credited explicitly,
+    with a link to the original
+    [TASA Typeface Collection](https://github.com/localremotetw/TASA-Typeface-Collection)
+    and the v1.001 release.
+  - License: SIL Open Font License 1.1, linking `LICENSE`.
+  - Family/style list (Agent Text/Deck/Display × weights, Agent VF) and
+    where to find the built files in `dist/Agent/`.
+  - Basic install/usage instructions (desktop install of the OTFs or the
+    variable TTF; `@font-face` snippet for `AgentVF.woff2` on the web).
 
 ## Verification plan
 
@@ -137,12 +159,10 @@ drop the new files into `vendor/` and re-run the script to regenerate `dist/`.
 - Render a sample string with each installed style as a quick visual sanity
   check that outlines/hinting are unaffected by the metadata edit.
 
-## Open items to confirm
+## Decisions (confirmed)
 
-1. Copyright holder name for the "Portions Copyright © 2026 ..." line —
-   defaulting to "Emil Uzelac"; correct me if you want something else (a
-   company name, a different year, no personal name at all, etc.).
-2. Whether to also declare "Agent" as a new Reserved Font Name in the
-   generated OFL.txt (default: no).
-3. Whether the vendor URL (nameID 11) should stay `localremote.co` or be
-   removed/changed.
+1. Modification copyright holder: **Emil Uzelac**.
+2. "Agent" is **not** declared a new Reserved Font Name.
+3. Vendor URL (nameID 11) stays `localremote.co`.
+4. Repo: public, `github.com/emiluzelac/agent-font`, with a README crediting
+   Local Remote / Weizhong Zhang as the original designer.
